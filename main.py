@@ -101,7 +101,14 @@ def upload_voice():
 def generate():
     text = request.json['text']
     voice_name = str(request.json['voice_name'])
-    print(voice_name)
+    exaggeration = str(request.json['exaggeration'])
+    if not exaggeration:
+        exaggeration = 0.5
+    cfg_weight = str(request.json['voice_name'])
+    if not cfg_weight:
+        cfg_weight = 0.5
+
+    logging.debug("text: {}, voice_mame: {}, exaggeration: {}, cfg_weight: {}".format(text, voice_name, exaggeration, cfg_weight))
 
     # reference_text_path = os.path.join(app.config['UPLOAD_FOLDER'], voice_name.replace(".wav", ".txt"))
     # reference_text = ""
