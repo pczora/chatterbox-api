@@ -1,4 +1,5 @@
 import io
+import logging
 import os
 
 import torch
@@ -23,8 +24,17 @@ auth = HTTPBasicAuth()
 metrics = PrometheusMetrics(app, metrics_decorator=auth.login_required)
 
 
-# Detect device (Mac with M1/M2/M3/M4)
-device = "mps" if torch.backends.mps.is_available() else "cpu"
+if torch.cuda.is_available():
+    logging.info('Using GPU')
+    device = 'cuda'
+elif torch.backends.mps.is_available():
+    #Mac with M1/M2/M3/M4
+    logging.info('Using CPU (Apple Silicon)')
+    device = 'mps'
+else:
+    logging.info('Using CPU')
+    device = 'cpu'
+
 map_location = torch.device(device)
 
 torch_load_original = torch.load
@@ -100,11 +110,12 @@ def generate():
     #     reference_text = f.read()
     #     f.close()
 
+    voice_path = app.config['UPLOAD_FOLDER'] + voice_name
     try:
         wav = model.generate(
             text,
-            # audio_prompt_path=AUDIO_PROMPT_PATH,
-            exaggeration=1.0,
+            audio_prompt_path=voice_path,
+            exaggeration=0.5,
             cfg_weight=0.5
         )
 
