@@ -104,11 +104,11 @@ def generate():
     exaggeration = str(request.json['exaggeration'])
     if not exaggeration:
         exaggeration = 0.5
-    cfg_weight = str(request.json['voice_name'])
+    cfg_weight = str(request.json['cfg_weight'])
     if not cfg_weight:
         cfg_weight = 0.5
 
-    logging.debug("text: {}, voice_mame: {}, exaggeration: {}, cfg_weight: {}".format(text, voice_name, exaggeration, cfg_weight))
+    logging.debug("text: {}, voice_name: {}, exaggeration: {}, cfg_weight: {}".format(text, voice_name, exaggeration, cfg_weight))
 
     # reference_text_path = os.path.join(app.config['UPLOAD_FOLDER'], voice_name.replace(".wav", ".txt"))
     # reference_text = ""
@@ -117,7 +117,7 @@ def generate():
     #     reference_text = f.read()
     #     f.close()
 
-    voice_path = app.config['UPLOAD_FOLDER'] + voice_name
+    voice_path = app.config['UPLOAD_FOLDER'] + "/" + voice_name
     try:
         wav = model.generate(
             text,
