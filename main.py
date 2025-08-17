@@ -30,36 +30,19 @@ logger.setLevel(logging.DEBUG)
 logger.info("Initializing Chatterbox TTS")
 tts_model: "ChatterboxTTS" = ChatterboxTTS.from_pretrained(device="cuda")
 logger.info("Compilation...")
+
+logger.info("Compilation done")
+
+dtype=torch.bfloat16
+
+tts_model.t3.to(dtype=dtype)
+tts_model.conds.t3.to(dtype=dtype)
+torch.cuda.empty_cache()
+
+torch.set_default_dtype(torch.bfloat16)
 tts_model.t3._step_compilation_target = torch.compile(
     tts_model.t3._step_compilation_target, fullgraph=True, backend="cudagraphs"
 )
-logger.info("Compilation done")
-
-def t3_to(model: "ChatterboxTTS", dtype):
-    model.t3.to(dtype=dtype)
-    model.conds.t3.to(dtype=dtype)
-    return model
-
-def s3gen_to(model: "ChatterboxTTS", dtype):
-    if dtype == torch.float16:
-        model.s3gen.flow.fp16 = True
-    elif dtype == torch.float32:
-        model.s3gen.flow.fp16 = False
-    else:
-        raise NotImplementedError(f"Unsupported dtype {dtype}")
-    # model.s3gen.flow.to(dtype=dtype)
-    model.s3gen.to(dtype=dtype)
-    model.s3gen.mel2wav.to(dtype=torch.float32)
-    # due to "Error: cuFFT doesn't support tensor of type: BFloat16" from torch.stft
-    # and other errors and general instability
-    model.s3gen.tokenizer.to(dtype=torch.float32)
-    model.s3gen.speaker_encoder.to(dtype=torch.float32)
-    return model
-
-torch.set_default_dtype(torch.bfloat16)
-tts_model = t3_to(tts_model, torch.bfloat16)
-s3gen_to(tts_model, torch.float16)
-torch.cuda.empty_cache()
 
 
 @auth.verify_password
@@ -131,7 +114,8 @@ def generate():
             text,
             audio_prompt_path=voice_path,
             exaggeration=0.5,
-            cfg_weight=0.5
+            cfg_weight=0.5,
+            max_cache_len=1500
         )
 
         buffer = io.BytesIO()
