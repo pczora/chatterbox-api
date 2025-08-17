@@ -29,21 +29,20 @@ logger.setLevel(logging.DEBUG)
 
 logger.info("Initializing Chatterbox TTS")
 tts_model: "ChatterboxTTS" = ChatterboxTTS.from_pretrained(device="cuda")
-logger.info("Compilation...")
 
-logger.info("Compilation done")
+
+
 
 dtype=torch.bfloat16
 
 tts_model.t3.to(dtype=dtype)
 tts_model.conds.t3.to(dtype=dtype)
 torch.cuda.empty_cache()
-
-torch.set_default_dtype(torch.bfloat16)
+logger.info("Compilation...")
 tts_model.t3._step_compilation_target = torch.compile(
     tts_model.t3._step_compilation_target, fullgraph=True, backend="cudagraphs"
 )
-
+logger.info("Compilation done")
 
 @auth.verify_password
 def flask_verify_pw(username, password):
@@ -110,9 +109,10 @@ def generate():
 
     voice_path = app.config['UPLOAD_FOLDER'] + "/" + voice_name
     try:
+        tts_model.prepare_conditionals(voice_path)
+        tts_model.conds.t3.to(dtype=dtype)
         wav = tts_model.generate(
             text,
-            audio_prompt_path=voice_path,
             exaggeration=0.5,
             cfg_weight=0.5,
             max_cache_len=1500
@@ -128,6 +128,7 @@ def generate():
         response.headers['Content-Disposition'] = 'attachment; filename=sound.wav'
         return response
     except Exception as e:
+        logger.error(e)
         return jsonify({"message": f"tts failed", "Exception": str(e)}), 400
 
 
