@@ -39,7 +39,7 @@ def t3_to(model: "ChatterboxTTS", dtype):
     model.t3.to(dtype=dtype)
     model.conds.t3.to(dtype=dtype)
     return model
-
+torch.set_default_dtype(torch.bfloat16)
 tts_model = t3_to(tts_model, torch.bfloat16)
 
 # if "FORCE_CUDA" in app.config and app.config["FORCE_CUDA"]:
