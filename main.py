@@ -39,30 +39,27 @@ def t3_to(model: "ChatterboxTTS", dtype):
     model.t3.to(dtype=dtype)
     model.conds.t3.to(dtype=dtype)
     return model
+
+def s3gen_to(model: "ChatterboxTTS", dtype):
+    if dtype == torch.float16:
+        model.s3gen.flow.fp16 = True
+    elif dtype == torch.float32:
+        model.s3gen.flow.fp16 = False
+    else:
+        raise NotImplementedError(f"Unsupported dtype {dtype}")
+    # model.s3gen.flow.to(dtype=dtype)
+    model.s3gen.to(dtype=dtype)
+    model.s3gen.mel2wav.to(dtype=torch.float32)
+    # due to "Error: cuFFT doesn't support tensor of type: BFloat16" from torch.stft
+    # and other errors and general instability
+    model.s3gen.tokenizer.to(dtype=torch.float32)
+    model.s3gen.speaker_encoder.to(dtype=torch.float32)
+    return model
+
 torch.set_default_dtype(torch.bfloat16)
 tts_model = t3_to(tts_model, torch.bfloat16)
-
-# if "FORCE_CUDA" in app.config and app.config["FORCE_CUDA"]:
-#     logging.info('Forcing GPU')
-#     device = 'cuda'
-# elif torch.cuda.is_available():
-#     logging.info('Using GPU')
-#     device = 'cuda'
-# elif torch.backends.mps.is_available():
-#     #Mac with M1/M2/M3/M4
-#     logging.info('Using CPU (Apple Silicon)')
-#     device = 'mps'
-# else:
-#     logging.info('Using CPU')
-#     device = 'cpu'
-
-
-
-# text = "Today is the day. I want to move like a titan at dawn, sweat like a god forging lightning. No more excuses. From now on, my mornings will be temples of discipline. I am going to work out like the gods… every damn day."
-#
-# # If you want to synthesize with a different voice, specify the audio prompt
-# # AUDIO_PROMPT_PATH = "YOUR_FILE.wav"
-# print("Generating!")
+s3gen_to(tts_model, torch.float16)
+torch.cuda.empty_cache()
 
 
 @auth.verify_password
