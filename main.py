@@ -38,10 +38,7 @@ metrics = PrometheusMetrics(app, metrics_decorator=auth.login_required)
 #     logging.info('Using CPU')
 #     device = 'cpu'
 
-model: "ChatterboxTTS" = ChatterboxTTS.from_pretrained(device="cuda")
-model.t3._step_compilation_target = torch.compile(
-    model.t3._step_compilation_target, fullgraph=True, backend="cudagraphs"
-)
+
 
 # text = "Today is the day. I want to move like a titan at dawn, sweat like a god forging lightning. No more excuses. From now on, my mornings will be temples of discipline. I am going to work out like the gods… every damn day."
 #
@@ -116,6 +113,11 @@ def generate():
 
     voice_path = app.config['UPLOAD_FOLDER'] + "/" + voice_name
     try:
+        model: "ChatterboxTTS" = ChatterboxTTS.from_pretrained(device="cuda")
+        model.t3._step_compilation_target = torch.compile(
+            model.t3._step_compilation_target, fullgraph=True, backend="cudagraphs"
+        )
+
         wav = model.generate(
             text,
             audio_prompt_path=voice_path,
