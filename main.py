@@ -24,7 +24,6 @@ app.config.from_prefixed_env('CHATTERBOX_API')
 auth = HTTPBasicAuth()
 metrics = PrometheusMetrics(app, metrics_decorator=auth.login_required)
 
-device = "cuda"
 # if "FORCE_CUDA" in app.config and app.config["FORCE_CUDA"]:
 #     logging.info('Forcing GPU')
 #     device = 'cuda'
@@ -39,25 +38,11 @@ device = "cuda"
 #     logging.info('Using CPU')
 #     device = 'cpu'
 
-# map_location = torch.device('cuda')
-#
-# torch_load_original = torch.load
-# def patched_torch_load(*args, **kwargs):
-#     if 'map_location' not in kwargs:
-#         kwargs['map_location'] = map_location
-#     return torch_load_original(*args, **kwargs)
-#
-# torch.load = patched_torch_load
-
-model = ChatterboxTTS.from_pretrained(device="cuda")
+model: "ChatterboxTTS" = ChatterboxTTS.from_pretrained(device="cuda")
 model.t3._step_compilation_target = torch.compile(
     model.t3._step_compilation_target, fullgraph=True, backend="cudagraphs"
 )
 
-def t3_to(model: "ChatterboxTTS", dtype):
-    model.t3.to(dtype=dtype)
-    model.conds.t3.to(dtype=dtype)
-    return model
 # text = "Today is the day. I want to move like a titan at dawn, sweat like a god forging lightning. No more excuses. From now on, my mornings will be temples of discipline. I am going to work out like the gods… every damn day."
 #
 # # If you want to synthesize with a different voice, specify the audio prompt
