@@ -27,10 +27,13 @@ metrics = PrometheusMetrics(app, metrics_decorator=auth.login_required)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
+logger.info("Initializing Chatterbox TTS")
 model: "ChatterboxTTS" = ChatterboxTTS.from_pretrained(device="cuda")
+logger.info("Compilation...")
 model.t3._step_compilation_target = torch.compile(
     model.t3._step_compilation_target, fullgraph=True, backend="cudagraphs"
 )
+logger.info("Compilation done")
 
 # if "FORCE_CUDA" in app.config and app.config["FORCE_CUDA"]:
 #     logging.info('Forcing GPU')
