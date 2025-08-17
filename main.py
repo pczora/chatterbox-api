@@ -28,12 +28,19 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 logger.info("Initializing Chatterbox TTS")
-model: "ChatterboxTTS" = ChatterboxTTS.from_pretrained(device="cuda")
+tts_model: "ChatterboxTTS" = ChatterboxTTS.from_pretrained(device="cuda")
 logger.info("Compilation...")
-model.t3._step_compilation_target = torch.compile(
-    model.t3._step_compilation_target, fullgraph=True, backend="cudagraphs"
+tts_model.t3._step_compilation_target = torch.compile(
+    tts_model.t3._step_compilation_target, fullgraph=True, backend="cudagraphs"
 )
 logger.info("Compilation done")
+
+def t3_to(model: "ChatterboxTTS", dtype):
+    model.t3.to(dtype=dtype)
+    model.conds.t3.to(dtype=dtype)
+    return model
+
+tts_model = t3_to(tts_model, torch.bfloat16)
 
 # if "FORCE_CUDA" in app.config and app.config["FORCE_CUDA"]:
 #     logging.info('Forcing GPU')
@@ -114,7 +121,6 @@ def generate():
         cfg_weight = 0.5
 
     logger.debug("text: {}, voice_name: {}, exaggeration: {}, cfg_weight: {}".format(text, voice_name, exaggeration, cfg_weight))
-
     # reference_text_path = os.path.join(app.config['UPLOAD_FOLDER'], voice_name.replace(".wav", ".txt"))
     # reference_text = ""
     # if os.path.isfile(reference_text_path):
@@ -124,7 +130,7 @@ def generate():
 
     voice_path = app.config['UPLOAD_FOLDER'] + "/" + voice_name
     try:
-        wav = model.generate(
+        wav = tts_model.generate(
             text,
             audio_prompt_path=voice_path,
             exaggeration=0.5,
@@ -132,7 +138,7 @@ def generate():
         )
 
         buffer = io.BytesIO()
-        ta.save(buffer, wav, model.sr, format="wav")
+        ta.save(buffer, wav, tts_model.sr, format="wav")
         buffer.seek(0)
 
 
