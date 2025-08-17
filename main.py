@@ -24,6 +24,9 @@ app.config.from_prefixed_env('CHATTERBOX_API')
 auth = HTTPBasicAuth()
 metrics = PrometheusMetrics(app, metrics_decorator=auth.login_required)
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
 # if "FORCE_CUDA" in app.config and app.config["FORCE_CUDA"]:
 #     logging.info('Forcing GPU')
 #     device = 'cuda'
@@ -102,7 +105,7 @@ def generate():
     if not cfg_weight:
         cfg_weight = 0.5
 
-    logging.debug("text: {}, voice_name: {}, exaggeration: {}, cfg_weight: {}".format(text, voice_name, exaggeration, cfg_weight))
+    logger.debug("text: {}, voice_name: {}, exaggeration: {}, cfg_weight: {}".format(text, voice_name, exaggeration, cfg_weight))
 
     # reference_text_path = os.path.join(app.config['UPLOAD_FOLDER'], voice_name.replace(".wav", ".txt"))
     # reference_text = ""
