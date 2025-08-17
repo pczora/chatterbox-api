@@ -27,6 +27,11 @@ metrics = PrometheusMetrics(app, metrics_decorator=auth.login_required)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
+model: "ChatterboxTTS" = ChatterboxTTS.from_pretrained(device="cuda")
+model.t3._step_compilation_target = torch.compile(
+    model.t3._step_compilation_target, fullgraph=True, backend="cudagraphs"
+)
+
 # if "FORCE_CUDA" in app.config and app.config["FORCE_CUDA"]:
 #     logging.info('Forcing GPU')
 #     device = 'cuda'
@@ -116,11 +121,6 @@ def generate():
 
     voice_path = app.config['UPLOAD_FOLDER'] + "/" + voice_name
     try:
-        model: "ChatterboxTTS" = ChatterboxTTS.from_pretrained(device="cuda")
-        model.t3._step_compilation_target = torch.compile(
-            model.t3._step_compilation_target, fullgraph=True, backend="cudagraphs"
-        )
-
         wav = model.generate(
             text,
             audio_prompt_path=voice_path,
