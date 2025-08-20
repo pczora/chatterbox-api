@@ -53,7 +53,7 @@ resemble-perth==1.0.1
 s3tokenizer==0.2.0
 safetensors==0.5.3
 scikit-learn==1.7.1
-scipy==1.16.1
+scipy==1.15.3
 setuptools==80.9.0
 soundfile==0.13.1
 soxr==0.5.0.post1
