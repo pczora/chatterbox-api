@@ -31,8 +31,6 @@ logger.info("Initializing Chatterbox TTS")
 tts_model: "ChatterboxTTS" = ChatterboxTTS.from_pretrained(device="cuda")
 
 
-
-
 dtype=torch.bfloat16
 
 tts_model.t3.to(dtype=dtype)
@@ -98,14 +96,35 @@ def generate():
     cfg_weight = str(request.json['cfg_weight'])
     if not cfg_weight:
         cfg_weight = 0.5
+    temperature = str(request.json['temperature'])
+    if not temperature:
+        temperature = 0.8
+    tokens_per_slice = str(request.json['tokens_per_slice'])
+    if not tokens_per_slice:
+        tokens_per_slice = None
+    remove_milliseconds = str(request.json['remove_milliseconds'])
+    if not remove_milliseconds:
+        remove_milliseconds = None
+    remove_milliseconds_start = str(request.json['remove_milliseconds_start'])
+    if not remove_milliseconds_start:
+        remove_milliseconds_start = None
+    max_new_tokens = str(request.json['max_new_tokens'])
+    if not max_new_tokens:
+        max_new_tokens = None
+    max_cache_len = str(request.json['max_cache_len'])
+    if not max_cache_len:
+        max_cache_len = 1500
+    repetition_penalty = str(request.json['repetition_penalty'])
+    if not repetition_penalty:
+        repetition_penalty = 1.2
+    min_p = str(request.json['min_p'])
+    if not min_p:
+        min_p = 0.05
+    top_p = str(request.json['top_p'])
+    if not top_p:
+        top_p = 1.0
 
     logger.debug("text: {}, voice_name: {}, exaggeration: {}, cfg_weight: {}".format(text, voice_name, exaggeration, cfg_weight))
-    # reference_text_path = os.path.join(app.config['UPLOAD_FOLDER'], voice_name.replace(".wav", ".txt"))
-    # reference_text = ""
-    # if os.path.isfile(reference_text_path):
-    #     f = open(reference_text_path, "r")
-    #     reference_text = f.read()
-    #     f.close()
 
     voice_path = app.config['UPLOAD_FOLDER'] + "/" + voice_name
     try:
@@ -113,9 +132,17 @@ def generate():
         tts_model.conds.t3.to(dtype=dtype)
         wav = tts_model.generate(
             text,
-            exaggeration=0.5,
-            cfg_weight=0.5,
-            max_cache_len=1500
+            exaggeration=exaggeration,
+            cfg_weight=cfg_weight,
+            temperature=temperature,
+            tokens_per_slice=tokens_per_slice,
+            remove_milliseconds=remove_milliseconds,
+            remove_milliseconds_start=remove_milliseconds_start,
+            max_new_tokens=max_new_tokens,
+            max_cache_len=max_cache_len,
+            repetition_penalty=repetition_penalty,
+            min_p=min_p,
+            top_p=top_p,
         )
 
         buffer = io.BytesIO()
