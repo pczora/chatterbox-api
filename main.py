@@ -88,41 +88,33 @@ def upload_voice():
 @app.route('/generate', methods=['POST'])
 @basic_auth
 def generate():
-    text = request.json['text']
-    voice_name = str(request.json['voice_name'])
-    exaggeration = str(request.json['exaggeration'])
-    if not exaggeration:
-        exaggeration = 0.5
-    cfg_weight = str(request.json['cfg_weight'])
-    if not cfg_weight:
-        cfg_weight = 0.5
-    temperature = str(request.json['temperature'])
-    if not temperature:
-        temperature = 0.8
-    tokens_per_slice = str(request.json['tokens_per_slice'])
-    if not tokens_per_slice:
-        tokens_per_slice = None
-    remove_milliseconds = str(request.json['remove_milliseconds'])
-    if not remove_milliseconds:
-        remove_milliseconds = None
-    remove_milliseconds_start = str(request.json['remove_milliseconds_start'])
-    if not remove_milliseconds_start:
-        remove_milliseconds_start = None
-    max_new_tokens = str(request.json['max_new_tokens'])
-    if not max_new_tokens:
-        max_new_tokens = None
-    max_cache_len = str(request.json['max_cache_len'])
-    if not max_cache_len:
-        max_cache_len = 1500
-    repetition_penalty = str(request.json['repetition_penalty'])
-    if not repetition_penalty:
-        repetition_penalty = 1.2
-    min_p = str(request.json['min_p'])
-    if not min_p:
-        min_p = 0.05
-    top_p = str(request.json['top_p'])
-    if not top_p:
-        top_p = 1.0
+    data = request.json or {}
+
+    text = data.get("text", "")
+    if not text:
+        return jsonify({"message": f"tts failed"}), 400
+    voice_name = data.get("voice_name", "")
+
+    exaggeration = float(data.get("exaggeration", 0.5))
+    cfg_weight = float(data.get("cfg_weight", 0.5))
+    temperature = float(data.get("temperature", 0.8))
+
+    tokens_per_slice = data.get("tokens_per_slice")
+    tokens_per_slice = int(tokens_per_slice) if tokens_per_slice is not None else None
+
+    remove_milliseconds = data.get("remove_milliseconds")
+    remove_milliseconds = int(remove_milliseconds) if remove_milliseconds is not None else None
+
+    remove_milliseconds_start = data.get("remove_milliseconds_start")
+    remove_milliseconds_start = int(remove_milliseconds_start) if remove_milliseconds_start is not None else None
+
+    max_new_tokens = data.get("max_new_tokens")
+    max_new_tokens = int(max_new_tokens) if max_new_tokens is not None else None
+
+    max_cache_len = int(data.get("max_cache_len", 1500))
+    repetition_penalty = float(data.get("repetition_penalty", 1.2))
+    min_p = float(data.get("min_p", 0.05))
+    top_p = float(data.get("top_p", 1.0))
 
     logger.debug("text: {}, voice_name: {}, exaggeration: {}, cfg_weight: {}".format(text, voice_name, exaggeration, cfg_weight))
 
