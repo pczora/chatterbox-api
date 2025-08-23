@@ -117,8 +117,9 @@ def generate():
     top_p = float(data.get("top_p", 1.0))
 
     logger.debug("text: {}, voice_name: {}, exaggeration: {}, cfg_weight: {}".format(text, voice_name, exaggeration, cfg_weight))
+    logger.debug("voice_name: {} UPLOAD_FOLDER: {}".format(voice_name, UPLOAD_FOLDER))
 
-    voice_path = app.config['UPLOAD_FOLDER'] + "/" + voice_name
+    voice_path = UPLOAD_FOLDER + "/" + voice_name
     try:
         tts_model.prepare_conditionals(voice_path)
         tts_model.conds.t3.to(dtype=dtype)
