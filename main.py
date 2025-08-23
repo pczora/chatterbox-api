@@ -12,8 +12,8 @@ from prometheus_flask_exporter import PrometheusMetrics
 from functools import wraps
 
 
-# UPLOAD_FOLDER = '/workspace/reference_voices'
-UPLOAD_FOLDER = './'
+UPLOAD_FOLDER = '/workspace/reference_voices'
+# UPLOAD_FOLDER = './'
 ALLOWED_EXTENSIONS = {'wav', 'txt'}
 
 
