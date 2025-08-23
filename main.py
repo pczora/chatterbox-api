@@ -99,24 +99,16 @@ def generate():
     cfg_weight = float(data.get("cfg_weight", 0.5))
     temperature = float(data.get("temperature", 0.8))
 
-    tokens_per_slice = data.get("tokens_per_slice")
-    tokens_per_slice = int(tokens_per_slice) if tokens_per_slice is not None else None
 
-    remove_milliseconds = data.get("remove_milliseconds")
-    remove_milliseconds = int(remove_milliseconds) if remove_milliseconds is not None else None
-
-    remove_milliseconds_start = data.get("remove_milliseconds_start")
-    remove_milliseconds_start = int(remove_milliseconds_start) if remove_milliseconds_start is not None else None
-
-    max_new_tokens = data.get("max_new_tokens")
-    max_new_tokens = int(max_new_tokens) if max_new_tokens is not None else None
-
+    max_new_tokens = int(data.get("max_new_tokens"), 1000)
     max_cache_len = int(data.get("max_cache_len", 1500))
     repetition_penalty = float(data.get("repetition_penalty", 1.2))
     min_p = float(data.get("min_p", 0.05))
     top_p = float(data.get("top_p", 1.0))
 
-    logger.debug("text: {}, voice_name: {}, exaggeration: {}, cfg_weight: {}".format(text, voice_name, exaggeration, cfg_weight))
+    logger.debug(
+        "text: {}, voice_name: {}, exaggeration: {}, cfg_weight: {}, temperature: {}, max_new_tokens: {}, max_cache_len: {}, repetition_penalty: {}, min_p: {}, top_p: {}"
+        .format(text, voice_name, exaggeration, cfg_weight, temperature, max_new_tokens, max_cache_len, repetition_penalty, min_p, top_p))
     logger.debug("voice_name: {} UPLOAD_FOLDER: {}".format(voice_name, UPLOAD_FOLDER))
 
     voice_path = UPLOAD_FOLDER + "/" + voice_name
@@ -131,9 +123,6 @@ def generate():
             exaggeration=exaggeration,
             cfg_weight=cfg_weight,
             temperature=temperature,
-            tokens_per_slice=tokens_per_slice,
-            remove_milliseconds=remove_milliseconds,
-            remove_milliseconds_start=remove_milliseconds_start,
             max_new_tokens=max_new_tokens,
             max_cache_len=max_cache_len,
             repetition_penalty=repetition_penalty,
