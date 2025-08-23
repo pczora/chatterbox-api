@@ -121,8 +121,11 @@ def generate():
 
     voice_path = UPLOAD_FOLDER + "/" + voice_name
     try:
+        logger.debug("preparing conditionals")
         tts_model.prepare_conditionals(voice_path)
         tts_model.conds.t3.to(dtype=dtype)
+        logger.debug("conditionals prepared")
+        logger.debug("generating tts")
         wav = tts_model.generate(
             text,
             exaggeration=exaggeration,
@@ -137,7 +140,7 @@ def generate():
             min_p=min_p,
             top_p=top_p,
         )
-
+        logger.debug("generated tts")
         buffer = io.BytesIO()
         ta.save(buffer, wav, tts_model.sr, format="wav")
         buffer.seek(0)
