@@ -99,8 +99,7 @@ def generate():
     cfg_weight = float(data.get("cfg_weight", 0.5))
     temperature = float(data.get("temperature", 0.8))
 
-
-    max_new_tokens = int(data.get("max_new_tokens"), 1000)
+    max_new_tokens = int(data.get("max_new_tokens", 1000))
     max_cache_len = int(data.get("max_cache_len", 1500))
     repetition_penalty = float(data.get("repetition_penalty", 1.2))
     min_p = float(data.get("min_p", 0.05))
