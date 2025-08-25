@@ -112,22 +112,23 @@ def generate():
 
     voice_path = UPLOAD_FOLDER + "/" + voice_name
     try:
-        logger.debug("preparing conditionals")
-        tts_model.prepare_conditionals(voice_path)
-        tts_model.conds.t3.to(dtype=dtype)
-        logger.debug("conditionals prepared")
-        logger.debug("generating tts")
-        wav = tts_model.generate(
-            text,
-            exaggeration=exaggeration,
-            cfg_weight=cfg_weight,
-            temperature=temperature,
-            max_new_tokens=max_new_tokens,
-            max_cache_len=max_cache_len,
-            repetition_penalty=repetition_penalty,
-            min_p=min_p,
-            top_p=top_p,
-        )
+        with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
+            logger.debug("preparing conditionals")
+            tts_model.prepare_conditionals(voice_path)
+            tts_model.conds.t3.to(dtype=dtype)
+            logger.debug("conditionals prepared")
+            logger.debug("generating tts")
+            wav = tts_model.generate(
+                text,
+                exaggeration=exaggeration,
+                cfg_weight=cfg_weight,
+                temperature=temperature,
+                max_new_tokens=max_new_tokens,
+                max_cache_len=max_cache_len,
+                repetition_penalty=repetition_penalty,
+                min_p=min_p,
+                top_p=top_p,
+            )
         logger.debug("generated tts")
         buffer = io.BytesIO()
         ta.save(buffer, wav, tts_model.sr, format="wav")
