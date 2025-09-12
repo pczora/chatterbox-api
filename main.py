@@ -122,7 +122,7 @@ def generate():
     min_p = float(data.get("min_p", 0.05))
     top_p = float(data.get("top_p", 1.0))
 
-    language_id = data.get("language_id", "")
+    language_id = data.get("language_id", "en")
 
     logger.debug(
         "text: {}, voice_name: {}, exaggeration: {}, cfg_weight: {}, temperature: {}, max_new_tokens: {}, max_cache_len: {}, repetition_penalty: {}, min_p: {}, top_p: {}"
@@ -131,7 +131,7 @@ def generate():
 
     voice_path = UPLOAD_FOLDER + "/" + voice_name
 
-    if language_id != "":
+    if language_id == "en":
         try:
             with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
                 logger.debug("preparing conditionals")
