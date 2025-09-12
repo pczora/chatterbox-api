@@ -5,6 +5,7 @@ import os
 import torch
 import torchaudio as ta
 from chatterbox.tts import ChatterboxTTS
+from chatterbox.mtl_tts import ChatterboxMultilingualTTS
 from flask_httpauth import HTTPBasicAuth
 from flask import Flask, make_response, request, jsonify
 from werkzeug.utils import secure_filename
@@ -27,20 +28,36 @@ metrics = PrometheusMetrics(app, metrics_decorator=auth.login_required)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-logger.info("Initializing Chatterbox TTS")
-tts_model: "ChatterboxTTS" = ChatterboxTTS.from_pretrained(device="cuda")
+multilang =  app.config.get("MULTILANGUAGE_MODEL", False)
 
+logger.info("Initializing Chatterbox TTS...")
+# if multilang:
+logger.info("...multi language model")
+multilang_tts_model: "ChatterboxMultilingualTTS" = ChatterboxMultilingualTTS.from_pretrained(device=torch.device("cuda"))
+dtype=torch.bfloat16
+
+multilang_tts_model.t3.to(dtype=dtype)
+multilang_tts_model.conds.t3.to(dtype=dtype)
+torch.cuda.empty_cache()
+logger.info("Compilation (multi language model)...")
+multilang_tts_model.t3._step_compilation_target = torch.compile(
+    multilang_tts_model.t3._step_compilation_target, fullgraph=True, backend="cudagraphs"
+)
+logger.info("Compilation done (multi language model)")
+# else:
+logger.info("...english language model")
+tts_model: "ChatterboxTTS" = ChatterboxTTS.from_pretrained(device="cuda")
 
 dtype=torch.bfloat16
 
 tts_model.t3.to(dtype=dtype)
 tts_model.conds.t3.to(dtype=dtype)
 torch.cuda.empty_cache()
-logger.info("Compilation...")
+logger.info("Compilation (english language model)... ")
 tts_model.t3._step_compilation_target = torch.compile(
     tts_model.t3._step_compilation_target, fullgraph=True, backend="cudagraphs"
 )
-logger.info("Compilation done")
+logger.info("Compilation done (english language model)")
 
 @auth.verify_password
 def flask_verify_pw(username, password):
@@ -105,45 +122,83 @@ def generate():
     min_p = float(data.get("min_p", 0.05))
     top_p = float(data.get("top_p", 1.0))
 
+    language_id = data.get("language_id", "")
+
     logger.debug(
         "text: {}, voice_name: {}, exaggeration: {}, cfg_weight: {}, temperature: {}, max_new_tokens: {}, max_cache_len: {}, repetition_penalty: {}, min_p: {}, top_p: {}"
         .format(text, voice_name, exaggeration, cfg_weight, temperature, max_new_tokens, max_cache_len, repetition_penalty, min_p, top_p))
     logger.debug("voice_name: {} UPLOAD_FOLDER: {}".format(voice_name, UPLOAD_FOLDER))
 
     voice_path = UPLOAD_FOLDER + "/" + voice_name
-    try:
-        with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
-            logger.debug("preparing conditionals")
-            tts_model.prepare_conditionals(voice_path)
-            tts_model.conds.t3.to(dtype=dtype)
-            logger.debug("conditionals prepared")
-            logger.debug("generating tts")
-            wav = tts_model.generate(
-                text,
-                exaggeration=exaggeration,
-                cfg_weight=cfg_weight,
-                temperature=temperature,
-                max_new_tokens=max_new_tokens,
-                max_cache_len=max_cache_len,
-                repetition_penalty=repetition_penalty,
-                min_p=min_p,
-                top_p=top_p,
-            )
-        logger.debug("generated tts")
-        buffer = io.BytesIO()
-        ta.save(buffer, wav, tts_model.sr, format="wav")
-        buffer.seek(0)
+
+    if language_id != "":
+        try:
+            with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
+                logger.debug("preparing conditionals")
+                tts_model.prepare_conditionals(voice_path)
+                tts_model.conds.t3.to(dtype=dtype)
+                logger.debug("conditionals prepared")
+                logger.debug("generating tts")
+                wav = tts_model.generate(
+                    text,
+                    exaggeration=exaggeration,
+                    cfg_weight=cfg_weight,
+                    temperature=temperature,
+                    max_new_tokens=max_new_tokens,
+                    max_cache_len=max_cache_len,
+                    repetition_penalty=repetition_penalty,
+                    min_p=min_p,
+                    top_p=top_p,
+                    language_id=language_id,
+                )
+            logger.debug("generated tts")
+            buffer = io.BytesIO()
+            ta.save(buffer, wav, tts_model.sr, format="wav")
+            buffer.seek(0)
 
 
-        response = make_response(buffer.read())
-        response.headers['Content-Type'] = 'audio/wav'
-        response.headers['Content-Disposition'] = 'attachment; filename=sound.wav'
-        return response
-    except Exception as e:
-        logger.error(e)
-        return jsonify({"message": f"tts failed", "Exception": str(e)}), 400
+            response = make_response(buffer.read())
+            response.headers['Content-Type'] = 'audio/wav'
+            response.headers['Content-Disposition'] = 'attachment; filename=sound.wav'
+            return response
+        except Exception as e:
+            logger.error(e)
+            return jsonify({"message": "tts failed", "Exception": str(e)}), 400
+    else:
+        try:
+            with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
+                logger.debug("preparing conditionals (multi language model)")
+                tts_model.prepare_conditionals(voice_path)
+                tts_model.conds.t3.to(dtype=dtype)
+                logger.debug("conditionals prepared (multi language model)")
+                logger.debug("generating tts (multi language model)")
+                wav = multilang_tts_model.generate(
+                    text,
+                    exaggeration=exaggeration,
+                    cfg_weight=cfg_weight,
+                    temperature=temperature,
+                    max_new_tokens=max_new_tokens,
+                    max_cache_len=max_cache_len,
+                    repetition_penalty=repetition_penalty,
+                    min_p=min_p,
+                    top_p=top_p,
+                    language_id=language_id,
+                )
+            logger.debug("generated tts (multi language model)")
+            buffer = io.BytesIO()
+            ta.save(buffer, wav, tts_model.sr, format="wav")
+            buffer.seek(0)
+
+
+            response = make_response(buffer.read())
+            response.headers['Content-Type'] = 'audio/wav'
+            response.headers['Content-Disposition'] = 'attachment; filename=sound.wav'
+            return response
+        except Exception as e:
+            logger.error(e)
+            return jsonify({"message": "tts failed (multi language model)", "Exception": str(e)}), 400
 
 
 if __name__ == '__main__':
 
-    app.run(host='0.0.0.0',port=5555,  debug=True)
+        app.run(host='0.0.0.0',port=5555,  debug=True)
