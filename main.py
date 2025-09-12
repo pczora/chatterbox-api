@@ -40,9 +40,7 @@ multilang_tts_model.t3.to(dtype=dtype)
 multilang_tts_model.conds.t3.to(dtype=dtype)
 torch.cuda.empty_cache()
 logger.info("Compilation (multi language model)...")
-multilang_tts_model.t3._step_compilation_target = torch.compile(
-    multilang_tts_model.t3._step_compilation_target, fullgraph=True, backend="cudagraphs"
-)
+multilang_tts_model.t3.compile()
 logger.info("Compilation done (multi language model)")
 # else:
 logger.info("...english language model")
@@ -54,9 +52,7 @@ tts_model.t3.to(dtype=dtype)
 tts_model.conds.t3.to(dtype=dtype)
 torch.cuda.empty_cache()
 logger.info("Compilation (english language model)... ")
-tts_model.t3._step_compilation_target = torch.compile(
-    tts_model.t3._step_compilation_target, fullgraph=True, backend="cudagraphs"
-)
+tts_model.t3.compile()
 logger.info("Compilation done (english language model)")
 
 @auth.verify_password
