@@ -179,6 +179,7 @@ def generate():
                     min_p=min_p,
                     top_p=top_p,
                     language_id=language_id,
+                    audio_prompt_path=voice_path
                 )
             logger.debug("generated tts (multi language model)")
             buffer = io.BytesIO()
