@@ -6,7 +6,7 @@ certifi==2025.8.3
 cffi==1.17.1
 cfgv==3.4.0
 charset-normalizer==3.4.2
-chatterbox-tts @ git+https://github.com/pczora/chatterbox.git@e33df55c58512b8f201e95bac298747194379331
+chatterbox-tts @ git+https://github.com/pczora/chatterbox.git@ca069877c2fb7fb827a08b1d5c6438a09840ba9c
 click==8.2.1
 conformer==0.3.2
 decorator==5.2.1
